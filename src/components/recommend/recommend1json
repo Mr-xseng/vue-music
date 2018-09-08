@@ -51,38 +51,38 @@ export default {
       discList: []
     }
   },
-  created() {
+  created () {
     this._getRecommend()
 
     this._getDiscList()
   },
   methods: {
-    handlePlaylist(playlist) {
+    handlePlaylist (playlist) {
       const bottom = playlist.length > 0 ? '60px' : ''
 
       this.$refs.recommend.style.bottom = bottom
       this.$refs.scroll.refresh()
     },
-    loadImage() {
+    loadImage () {
       if (!this.checkloaded) {
         this.checkloaded = true
         this.$refs.scroll.refresh()
       }
     },
-    selectItem(item) {
+    selectItem (item) {
       this.$router.push({
         path: `/recommend/${item.dissid}`
       })
       this.setDisc(item)
     },
-    _getRecommend() {
+    _getRecommend () {
       getRecommend().then((res) => {
         if (res.code === ERR_OK) {
           this.recommends = res.data.slider
         }
       })
     },
-    _getDiscList() {
+    _getDiscList () {
       getDiscList().then((res) => {
         if (res.code === ERR_OK) {
           this.discList = res.data.list

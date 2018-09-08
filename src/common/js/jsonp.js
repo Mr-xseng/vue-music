@@ -13,7 +13,6 @@ export default function jsonp (url, data, option) {
     })
   })
 }
-
 export function param (data) {
   let url = ''
   for (var k in data) {

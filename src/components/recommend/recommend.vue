@@ -1,35 +1,84 @@
 <template>
   <div class="recommend">
-    <div class="recommend-content">
-      <div class="slider-wrapper">
+    <scroll ref="scroll" class="recommend-content" :data="getDiscList">
+      <div>
+        <div class="slider-wrapper" v-if="sliderData.length">
+          <slider :sliderLength="sliderLength">
+            <div v-for="item in sliderData" :key="item.id">
+                <a :href="item.linkUrl">
+                  <img :src="item.picUrl" @load="loadImag">
+                </a>
+            </div>
+          </slider>
+        </div>
+        <div class="recommend-list">
+          <h1 class="list-title">热门歌单推荐</h1>
+          <ul>
+            <li class="item" v-for="(item,index) of getDiscList" :key="index">
+              <div class="icon">
+                <img v-lazy=item.imgurl width="60" height="60">
+              </div>
+              <div class="text">
+                <h2 class="name" v-html="item.creator.name"></h2>
+                <p class="desc" v-html="item.dissname"></p>
+              </div>
+            </li>
+          </ul>
+        </div>
       </div>
-      <div class="recommend-list">
-        <h1 class="list-title">热门歌单推荐</h1>
-        <ul>
-          <li class="item">
-          </li>
-        </ul>
-      </div>
-    </div>
+    </scroll>
     <!--<router-view></router-view>-->
   </div>
 </template>
 <script>
-import { getRecommend } from 'api/recommend'
+import { getRecommend, getDiscList } from 'api/recommend'
 import { ERR_OK } from 'api/config'
+import Slider from 'base/swiper/slider'
+import scroll from 'base/scroll/scroll'
 export default {
   name: 'Recommend',
-  mounted () {
-    this.getRecommendXhr()
-    // console.log(getRecommend())
+  data () {
+    return {
+      sliderData: [],
+      sliderLength: 0,
+      getDiscList: []
+    }
+  },
+  components: {
+    Slider,
+    scroll
+  },
+  created () {
+    this.getRecommendInfo()
+    this.getDiscListInfo()
   },
   methods: {
-    getRecommendXhr () {
+    getRecommendInfo () {
       getRecommend().then(this.getRecommendData)
     },
-    getRecommendData (res) {
-      if (!ERR_OK) {
-        console.log(res)
+    getRecommendData (xhr) {
+      const currentData = xhr.data
+      // console.log(currentData)
+      if (!ERR_OK && currentData) {
+        const swiperData = currentData.slider
+        // console.log(swiperData)
+        this.sliderData = swiperData
+        this.sliderLength = swiperData.length
+      }
+    },
+    getDiscListInfo () {
+      getDiscList().then((res) => {
+        const listData = res.data
+        if (!ERR_OK && listData) {
+          this.getDiscList = listData.list
+          // console.log(this.getDiscList)
+        }
+      })
+    },
+    loadImag () {
+      if (!this.checkLoad) {
+        this.checkLoad = true
+        this.$refs.scroll.refresh()
       }
     }
   }
@@ -37,6 +86,7 @@ export default {
 </script>
 <style scoped lang="stylus" rel="stylesheet/stylus">
   @import '~common/stylus/variable'
+  @import "~common/stylus/variable"
 
   .recommend
     position: fixed
@@ -57,6 +107,7 @@ export default {
           text-align: center
           font-size: $font-size-medium
           color: $color-theme
+          /*overflow: hidden*/
         .item
           display: flex
           box-sizing: border-box
@@ -65,7 +116,7 @@ export default {
           .icon
             flex: 0 0 60px
             width: 60px
-            padding-right: 20px
+            padding-right: 20
           .text
             display: flex
             flex-direction: column
@@ -74,6 +125,7 @@ export default {
             line-height: 20px
             overflow: hidden
             font-size: $font-size-medium
+            margin-left 20px
             .name
               margin-bottom: 10px
               color: $color-text
