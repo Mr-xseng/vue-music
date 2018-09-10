@@ -16,12 +16,20 @@ module.exports = {
           req.headers.referer = 'https://c.y.qq.com';
           req.headers.host = 'c.y.qq.com';
         },
-        // secure: false,
-        // changeOrigin: true,
         pathRewrite: {
           '^/api/getDiscList': ''
         }
-      }
+      },
+      // '/api/music': {
+      //   target: 'https://c.y.qq.com/base/fcgi-bin/fcg_music_express_mobile3.fcg',
+      //   bypass: function (req, res, proxyOptions) {
+      //     req.headers.referer = 'https://c.y.qq.com';
+      //     req.headers.host = 'c.y.qq.com';
+      //   },
+      //   pathRewrite: {
+      //     '^/api/musicKey': ''
+      //   }
+      // }
     },
 
     // Various Dev Server settings
