@@ -3,46 +3,191 @@
     <div class="back">
       <i class="icon-back"></i>
     </div>
-    <h1 class="title"></h1>
-    <div class="bg-image">
-      <div class="filter"></div>
+    <h1 class="title" v-html="title"></h1>
+    <div class="bg-image" :style="StyImage" ref="bgImage">
+      <div class="play-wrapper">
+        <div class="play" ref="play">
+          <i class="icon-play"></i>
+          <span class="text">随机播放全部</span>
+        </div>
+      </div>
+      <div class="filter" ref="filter"></div>
     </div>
+    <div class="bg-layer" ref="layer"></div>
+    <scroll :data="songs" class="list" ref="list"
+            :probe-type="probeType" :listen-scroll="listenScroll"
+            @scroll="scroll"
+    >
+      <div class="song-list-wrapper">
+        <song-list :songs="songs"></song-list>
+      </div>
+    </scroll>
   </div>
 </template>
 <script>
-// import {getVkey} from 'common/js/song'
+import scroll from 'base/scroll/scroll'
+import SongList from 'base/song-list/song-list'
+const REVER_ENV_HEIGHT = 40
 export default{
-  name: 'MusicList'
-  // mounted () {
-  //   this.getnusicKey()
-  // },
-  // methods: {
-  //   getnusicKey () {
-  //     getVkey('003jjoM94WLiTf', '002Jbzn235xaQZ').then((res) => {
-  //       console.log(res.data)
-  //     })
-  //   }
-  // }
+  name: 'MusicList',
+  props: {
+    songs: {
+      type: Array,
+      default: null
+    },
+    title: {
+      type: String,
+      default: ''
+    },
+    bgImage: {
+      type: String,
+      default: ''
+    }
+  },
+  computed: {
+    StyImage () {
+      return `background-image:url(${this.bgImage})`
+    }
+  },
+  components: {
+    scroll,
+    SongList
+  },
+  data () {
+    return {
+      scrollY: 0
+    }
+  },
+  mounted () {
+    this.imageHeight = this.$refs.bgImage.clientHeight
+    this.minTransfromY = -this.imageHeight + REVER_ENV_HEIGHT
+    this.$refs.list.$el.style.top = `${this.imageHeight}px`
+  },
+  created () {
+    this.probeType = 3
+    this.listenScroll = true
+  },
+  methods: {
+    scroll (pos) {
+      this.scrollY = pos.y
+      // console.log(this.scrollY)
+    }
+  },
+  watch: {
+    scrollY (newY) {
+      let transformY = Math.max(this.minTransfromY, newY)
+      // console.log(transformY)
+      let zIndex = 0
+      let scale = 1
+      let burl = 0
+      this.$refs.layer.style['transform'] = `translate3d(0,${transformY}px,0)`
+      this.$refs.layer.style['webkitTransform'] = `translate3d(0,${transformY}px,0)`
+      const percent = Math.abs(newY / this.imageHeight)
+      if (newY > 0) {
+        scale = percent + 1
+        zIndex = 10
+      } else {
+        burl = Math.min(percent * 20, percent)
+      }
+      this.$refs.filter.style['backdrop-filter'] = `blur(${burl})px`
+      this.$refs.filter.style['webkitBackdrop-filter'] = `blur(${burl})px`
+      if (newY < this.minTransfromY) {
+        zIndex = 10
+        this.$refs.play.style.display = 'none'
+        this.$refs.bgImage.style.paddingTop = 0
+        this.$refs.bgImage.style.height = `${REVER_ENV_HEIGHT}px`
+      } else {
+        this.$refs.bgImage.style.paddingTop = `70%`
+        this.$refs.bgImage.style.height = 0
+        this.$refs.play.style.display = ``
+      }
+      this.$refs.bgImage.style.zIndex = zIndex
+      this.$refs.bgImage.style['transform'] = `scale(${scale})`
+      this.$refs.bgImage.style['webkitTransform'] = `scale(${scale})`
+    }
+  }
 }
 </script>
 <style lang="stylus" scoped>
-  @import '~common/stylus/variable
+  @import '~common/stylus/variable'
   @import '~common/stylus/mixin'
   .music-list
-    position fixed
-    top 0
-    bottom 0
-    left 0
-    right 0
-    z-index 100
-    background $color-background
+    position: fixed
+    z-index: 100
+    top: 0
+    left: 0
+    bottom: 0
+    right: 0
+    background: $color-background
     .back
       position absolute
-      top 0
-      left 6px
-      z-index 50
+      top: 0
+      left: 6px
+      z-index: 50
       .icon-back
-        display block
-        padding 10px
-        color $color-theme
+        display: block
+        padding: 10px
+        font-size: $font-size-large-x
+        color: $color-theme
+    .title
+      position: absolute
+      top: 0
+      left: 10%
+      z-index: 40
+      width: 80%
+      no-wrap()
+      text-align: center
+      line-height: 40px
+      font-size: $font-size-large
+      color: $color-text
+    .bg-image
+      position: relative
+      width: 100%
+      height 0
+      padding-top: 70%
+      transform-origin: top
+      background-size: cover
+      .play-wrapper
+        position: absolute
+        bottom: 20px
+        z-index: 50
+        width: 100%
+        .play
+          box-sizing: border-box
+          width: 135px
+          padding: 7px 0
+          margin: 0 auto
+          text-align: center
+          border: 1px solid $color-theme
+          color: $color-theme
+          border-radius: 100px
+          font-size: 0
+          .icon-play
+            display: inline-block
+            vertical-align: middle
+            margin-right: 6px
+            font-size: $font-size-medium-x
+          .text
+            display: inline-block
+            vertical-align: middle
+            font-size: $font-size-small
+      .filter
+        position: absolute
+        top: 0
+        left: 0
+        width: 100%
+        height: 100%
+        background: rgba(7, 17, 27, 0.4)
+    .bg-layer
+      position: relative
+      height: 100%
+      background: $color-background
+    .list
+      position: fixed
+      top: 0
+      bottom: 0
+      width: 100%
+      background: $color-background
+      .song-list-wrapper
+        padding: 20px 30px
 </style>
