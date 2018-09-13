@@ -43,7 +43,7 @@ export default{
         if (res.code === ERR_OK) {
           this.songs = this.normalized(res.data.list)
           // console.log(this.singer)
-          console.log(this.songs)
+          // console.log(this.songs)
         }
       })
     },

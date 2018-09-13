@@ -26,6 +26,7 @@
           </ul>
         </div>
       </div>
+      <loading class="loading-container" v-show="!sliderData.length"></loading>
     </scroll>
     <!--<router-view></router-view>-->
   </div>
@@ -35,6 +36,7 @@ import { getRecommend, getDiscList } from 'api/recommend'
 import { ERR_OK } from 'api/config'
 import Slider from 'base/swiper/slider'
 import scroll from 'base/scroll/scroll'
+import Loading from 'base/loading/loading'
 export default {
   name: 'Recommend',
   data () {
@@ -46,7 +48,8 @@ export default {
   },
   components: {
     Slider,
-    scroll
+    scroll,
+    Loading
   },
   created () {
     this.getRecommendInfo()

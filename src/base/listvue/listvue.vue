@@ -36,11 +36,13 @@
     <div class="list-fixed" v-show="flexTitle" ref="fixed">
       <h2 class="fixed-title">{{flexTitle}}</h2>
     </div>
+    <loading class="loading-container" v-show="!data.length"></loading>
   </scroll>
 </template>
 <script>
 import scroll from 'base/scroll/scroll'
 import { getSingerKeyEle } from 'common/js/dom'
+import Loading from 'base/loading/loading'
 const HOT_HEIGHT = 18
 const TITLE_HEIGHT = 30
 export default {
@@ -181,7 +183,8 @@ export default {
     }
   },
   components: {
-    scroll
+    scroll,
+    Loading
   }
 }
 </script>
@@ -250,4 +253,9 @@ export default {
       width: 100%
       top: 50%
       transform: translateY(-50%)
+    .loading-container
+      position absolute
+      width 100%
+      height 50%
+      transform translateY(-50%)
 </style>

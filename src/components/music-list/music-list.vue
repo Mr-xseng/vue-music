@@ -1,6 +1,6 @@
 <template>
   <div class="music-list">
-    <div class="back">
+    <div class="back" @click="back">
       <i class="icon-back"></i>
     </div>
     <h1 class="title" v-html="title"></h1>
@@ -21,13 +21,20 @@
       <div class="song-list-wrapper">
         <song-list :songs="songs"></song-list>
       </div>
+      <div class="loading-container" v-show="!songs.length">
+        <loading></loading>
+      </div>
     </scroll>
   </div>
 </template>
 <script>
 import scroll from 'base/scroll/scroll'
 import SongList from 'base/song-list/song-list'
+import {prefixSty} from 'common/js/dom'
+import Loading from 'base/loading/loading'
 const REVER_ENV_HEIGHT = 40
+const transform = prefixSty('transform')
+const backdrop = prefixSty('backdrop-filter')
 export default{
   name: 'MusicList',
   props: {
@@ -51,7 +58,8 @@ export default{
   },
   components: {
     scroll,
-    SongList
+    SongList,
+    Loading
   },
   data () {
     return {
@@ -62,6 +70,7 @@ export default{
     this.imageHeight = this.$refs.bgImage.clientHeight
     this.minTransfromY = -this.imageHeight + REVER_ENV_HEIGHT
     this.$refs.list.$el.style.top = `${this.imageHeight}px`
+    // console.log(transform)
   },
   created () {
     this.probeType = 3
@@ -71,6 +80,9 @@ export default{
     scroll (pos) {
       this.scrollY = pos.y
       // console.log(this.scrollY)
+    },
+    back () {
+      this.$router.back()
     }
   },
   watch: {
@@ -80,17 +92,15 @@ export default{
       let zIndex = 0
       let scale = 1
       let burl = 0
-      this.$refs.layer.style['transform'] = `translate3d(0,${transformY}px,0)`
-      this.$refs.layer.style['webkitTransform'] = `translate3d(0,${transformY}px,0)`
+      this.$refs.layer.style[transform] = `translate3d(0,${transformY}px,0)`
       const percent = Math.abs(newY / this.imageHeight)
       if (newY > 0) {
         scale = percent + 1
         zIndex = 10
       } else {
-        burl = Math.min(percent * 20, percent)
+        burl = Math.min(percent * 20, 20)
       }
-      this.$refs.filter.style['backdrop-filter'] = `blur(${burl})px`
-      this.$refs.filter.style['webkitBackdrop-filter'] = `blur(${burl})px`
+      this.$refs.filter.style[backdrop] = `blur(${burl})px`
       if (newY < this.minTransfromY) {
         zIndex = 10
         this.$refs.play.style.display = 'none'
@@ -102,8 +112,7 @@ export default{
         this.$refs.play.style.display = ``
       }
       this.$refs.bgImage.style.zIndex = zIndex
-      this.$refs.bgImage.style['transform'] = `scale(${scale})`
-      this.$refs.bgImage.style['webkitTransform'] = `scale(${scale})`
+      this.$refs.bgImage.style[transform] = `scale(${scale})`
     }
   }
 }
@@ -190,4 +199,9 @@ export default{
       background: $color-background
       .song-list-wrapper
         padding: 20px 30px
+      .loading-container
+        position absolute
+        width 100%
+        height 50%
+        transform translateY(50%)
 </style>

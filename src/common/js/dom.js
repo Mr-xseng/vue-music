@@ -17,3 +17,29 @@ export function getSingerKeyEle (el, name, val) {
   }
   return el.getAttribute(prefiex + name)
 }
+
+let styElement = document.createElement('div').style
+let textSty = (() => {
+  let styleNames = {
+    webkit: 'webkitTransform',
+    Moz: 'MozTransform',
+    0: '0Transform',
+    ms: 'msTransform',
+    standard: 'transform'
+  }
+  for (let key in styleNames) {
+    if (styElement[styleNames[key]] !== undefined) {
+      return key
+    }
+  }
+  return false
+})()
+export function prefixSty (style) {
+  if (!textSty) {
+    return false
+  }
+  if (textSty === 'standard') {
+    return style
+  }
+  return textSty + style.charAt(0).toUpperCase() + style.substring(1, style.length)
+}
