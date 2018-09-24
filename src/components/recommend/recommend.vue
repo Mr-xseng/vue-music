@@ -66,7 +66,7 @@ export default {
         const swiperData = currentData.slider
         // console.log(swiperData)
         this.sliderData = swiperData
-        console.log(this.sliderData)
+        // console.log(this.sliderData)
         this.sliderLength = swiperData.length
       }
     },

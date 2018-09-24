@@ -27,18 +27,25 @@
         </div>
       </div>
       <div class="bottom">
+        <div class="progress-wrapper">
+          <span class="time time-l">{{format(currentTime)}}</span>
+          <div class="progress-bar-wrapper">
+            <progress-bar :percent="percent"></progress-bar>
+          </div>
+          <span class="time time-r">{{format(currentSong.duration)}}</span>
+        </div>
         <div class="operators">
           <div class="icon i-left">
             <i class="icon-sequence"></i>
           </div>
           <div class="icon i-left">
-            <i class="icon-prev"></i>
+            <i class="icon-prev" @click="prevMusic"></i>
           </div>
           <div class="icon i-center">
             <i :class="playIcon" @click="togglePlaying"></i>
           </div>
           <div class="icon icon-right">
-            <i class="icon-next"></i>
+            <i class="icon-next" @click="nextMusic"></i>
           </div>
           <div class="icon icon-right">
             <i class="icon icon-not-favorite"></i>
@@ -48,8 +55,8 @@
     </div>
     </transition>
     <transition name="mini">
-     <div class="mini-player" v-show="!pullScreen" @click="backBig">
-      <div class="icon">
+     <div class="mini-player" v-show="!pullScreen">
+      <div class="icon" @click="backBig">
         <img width="40" height="40" :src="currentSong.image" :class="cdCls">
       </div>
       <div class="text">
@@ -64,22 +71,33 @@
       </div>
     </div>
     </transition>
-    <audio :src="currentSong.url" ref="audio"></audio>
+    <audio :src="currentSong.url" ref="audio" @canplay="ready"
+    @error="error" @timeupdate="updateTime"
+    ></audio>
   </div>
 </template>
 <script>
 import {mapGetters, mapMutations} from 'vuex'
 import animations from 'create-keyframe-animation'
+import ProgressBar from 'base/progress-bar/progress-bar'
 import {prefixSty} from 'common/js/dom'
 const transform = prefixSty('transform')
 export default{
   name: 'Player',
+  components: {ProgressBar},
+  data () {
+    return {
+      songReady: false,
+      currentTime: 0
+    }
+  },
   computed: {
     ...mapGetters([
       'playList',
       'pullScreen',
       'currentSong',
-      'playing'
+      'playing',
+      'currentIndex'
     ]),
     playIcon () {
       return this.playing ? 'icon-pause' : 'icon-play'
@@ -89,6 +107,9 @@ export default{
     },
     cdCls () {
       return this.playing ? 'play' : 'play pause'
+    },
+    percent () {
+      return this.currentTime / this.currentSong.duration
     }
   },
   methods: {
@@ -100,7 +121,8 @@ export default{
     },
     ...mapMutations({
       setPullScreen: 'SET_PULL_SCREEN',
-      setPlayingState: 'SET_PLAYING_STATE'
+      setPlayingState: 'SET_PLAYING_STATE',
+      setCurrentIndex: 'SET_CURRENT_INDEX'
     }),
     enter (el, done) {
       const {x, y, scale} = this._getDeviation()
@@ -120,7 +142,7 @@ export default{
         name: 'move',
         animation,
         presets: {
-          duration: 500,
+          duration: 700,
           easing: 'linear'
         }
       })
@@ -156,7 +178,45 @@ export default{
       }
     },
     togglePlaying () {
+      if (!this.songReady) {
+        return
+      }
       this.setPlayingState(!this.playing)
+    },
+    prevMusic () {
+      if (!this.songReady) {
+        return
+      }
+      this.setCurrentIndex(this.currentIndex === 0 ? this.playList.length - 1 : this.currentIndex + 1)
+      this.setPlayingState(true)
+      this.songReady = false
+    },
+    nextMusic () {
+      if (!this.songReady) {
+        return
+      }
+      this.setCurrentIndex(this.currentIndex === this.playList.length - 1 ? 0 : this.currentIndex + 1)
+      this.setPlayingState(true)
+      this.songReady = false
+    },
+    ready () {
+      this.songReady = true
+    },
+    error () {
+      this.songReady = true
+    },
+    updateTime (e) {
+      this.currentTime = e.target.currentTime
+      if (this.currentTime === this.currentSong.duration) {
+        this.currentTime = 0
+        this.nextMusic()
+      }
+    },
+    format (interval) {
+      const newInterval = interval | 0
+      const mintue = (newInterval / 60) | 0
+      const second = (newInterval % 60) | 0
+      return second < 10 ? `${mintue}:0${second}` : `${mintue}:${second}`
     }
   },
   watch: {
@@ -177,7 +237,7 @@ export default{
 <style lang="stylus" scoped>
   @import "~common/stylus/variable"
   @import "~common/stylus/mixin"
-
+  * { touch-action: none; }
   .player
     .normal-player
       position: fixed
