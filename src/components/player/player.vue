@@ -30,7 +30,7 @@
         <div class="progress-wrapper">
           <span class="time time-l">{{format(currentTime)}}</span>
           <div class="progress-bar-wrapper">
-            <progress-bar :percent="percent"></progress-bar>
+            <progress-bar :percent="percent" @progressMove="progressMove"></progress-bar>
           </div>
           <span class="time time-r">{{format(currentSong.duration)}}</span>
         </div>
@@ -207,16 +207,19 @@ export default{
     },
     updateTime (e) {
       this.currentTime = e.target.currentTime
-      if (this.currentTime === this.currentSong.duration) {
-        this.currentTime = 0
-        this.nextMusic()
-      }
     },
     format (interval) {
       const newInterval = interval | 0
       const mintue = (newInterval / 60) | 0
       const second = (newInterval % 60) | 0
       return second < 10 ? `${mintue}:0${second}` : `${mintue}:${second}`
+    },
+    progressMove (percent) {
+      const newCurrentTime = this.currentSong.duration * percent
+      this.$refs.audio.currentTime = newCurrentTime
+      if (!this.playing) {
+        this.togglePlaying()
+      }
     }
   },
   watch: {
@@ -230,7 +233,17 @@ export default{
       this.$nextTick(() => {
         newPlay ? audio.play() : audio.pause()
       })
+    },
+    percent () {
+      if (this.percent >= 1) {
+        this.nextMusic()
+      }
     }
+    // currentDuration () {
+    //   if (this.$refs.audio.currentTime === this.currentSong.duration) {
+    //     this.nextMusic()
+    //   }
+    // }
   }
 }
 </script>
