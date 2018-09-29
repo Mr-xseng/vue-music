@@ -6,7 +6,7 @@
     <h1 class="title" v-html="title"></h1>
     <div class="bg-image" :style="StyImage" ref="bgImage">
       <div class="play-wrapper">
-        <div class="play" ref="play">
+        <div class="play" ref="play" @click="randomPlay">
           <i class="icon-play"></i>
           <span class="text">随机播放全部</span>
         </div>
@@ -91,8 +91,14 @@ export default{
         index
       })
     },
+    randomPlay () {
+      this.randomMusic({
+        list: this.songs
+      })
+    },
     ...mapActions([
-      'selectPlay'
+      'selectPlay',
+      'randomMusic'
     ])
   },
   watch: {

@@ -35,8 +35,8 @@
           <span class="time time-r">{{format(currentSong.duration)}}</span>
         </div>
         <div class="operators">
-          <div class="icon i-left">
-            <i class="icon-sequence"></i>
+          <div class="icon i-left" @click="changeMode">
+            <i :class="iconMode"></i>
           </div>
           <div class="icon i-left">
             <i class="icon-prev" @click="prevMusic"></i>
@@ -64,7 +64,9 @@
         <p class="desc" v-html="currentSong.singer"></p>
       </div>
       <div class="control">
-        <i :class="miniIcon" @click.stop="togglePlaying"></i>
+        <progress-circle :radius="radius" :percent="percent">
+          <i :class="miniIcon" @click.stop="togglePlaying" class="icon-mini"></i>
+        </progress-circle>
       </div>
       <div class="control">
         <i class="icon-playlist"></i>
@@ -72,7 +74,7 @@
     </div>
     </transition>
     <audio :src="currentSong.url" ref="audio" @canplay="ready"
-    @error="error" @timeupdate="updateTime"
+    @error="error" @timeupdate="updateTime" @ended="endMusic"
     ></audio>
   </div>
 </template>
@@ -80,15 +82,22 @@
 import {mapGetters, mapMutations} from 'vuex'
 import animations from 'create-keyframe-animation'
 import ProgressBar from 'base/progress-bar/progress-bar'
+import ProgressCircle from 'base/progress-circle/progress-circle'
 import {prefixSty} from 'common/js/dom'
+import {playingMode} from 'common/js/config'
+import {shuffMusicList} from 'common/js/shuff-music'
 const transform = prefixSty('transform')
 export default{
   name: 'Player',
-  components: {ProgressBar},
+  components: {
+    ProgressBar,
+    ProgressCircle
+  },
   data () {
     return {
       songReady: false,
-      currentTime: 0
+      currentTime: 0,
+      radius: 32
     }
   },
   computed: {
@@ -97,7 +106,9 @@ export default{
       'pullScreen',
       'currentSong',
       'playing',
-      'currentIndex'
+      'currentIndex',
+      'mode',
+      'sequenceList'
     ]),
     playIcon () {
       return this.playing ? 'icon-pause' : 'icon-play'
@@ -110,6 +121,15 @@ export default{
     },
     percent () {
       return this.currentTime / this.currentSong.duration
+    },
+    iconMode () {
+      if (this.mode === playingMode.sequence) {
+        return 'icon-sequence'
+      } else if (this.mode === playingMode.loop) {
+        return 'icon-loop'
+      } else {
+        return 'icon-random'
+      }
     }
   },
   methods: {
@@ -122,7 +142,9 @@ export default{
     ...mapMutations({
       setPullScreen: 'SET_PULL_SCREEN',
       setPlayingState: 'SET_PLAYING_STATE',
-      setCurrentIndex: 'SET_CURRENT_INDEX'
+      setCurrentIndex: 'SET_CURRENT_INDEX',
+      setPlayModeIndex: 'SET_PLAY_MODE',
+      setPlayingList: 'SET_PLAY_LIST'
     }),
     enter (el, done) {
       const {x, y, scale} = this._getDeviation()
@@ -177,6 +199,35 @@ export default{
         scale
       }
     },
+    changeMode () {
+      const modeIndex = (this.mode + 1) % 3
+      let list = null
+      this.setPlayModeIndex(modeIndex)
+      if (this.mode === playingMode.random) {
+        list = shuffMusicList(this.sequenceList)
+      } else {
+        list = this.sequenceList
+      }
+      this.findIndex(list)
+      this.setPlayingList(list)
+    },
+    findIndex (list) {
+      const index = list.findIndex((item) => {
+        return item.id === this.currentSong.id
+      })
+      this.setCurrentIndex(index)
+    },
+    endMusic () {
+      if (this.mode === playingMode.loop) {
+        this.loop()
+      } else {
+        this.nextMusic()
+      }
+    },
+    loop () {
+      this.$refs.audio.currentTime = 0
+      this.$refs.audio.play()
+    },
     togglePlaying () {
       if (!this.songReady) {
         return
@@ -223,7 +274,10 @@ export default{
     }
   },
   watch: {
-    currentSong () {
+    currentSong (newSong, oldSong) {
+      if (newSong.id === oldSong.id) {
+        return
+      }
       this.$nextTick(() => {
         this.$refs.audio.play()
       })
@@ -233,17 +287,7 @@ export default{
       this.$nextTick(() => {
         newPlay ? audio.play() : audio.pause()
       })
-    },
-    percent () {
-      if (this.percent >= 1) {
-        this.nextMusic()
-      }
     }
-    // currentDuration () {
-    //   if (this.$refs.audio.currentTime === this.currentSong.duration) {
-    //     this.nextMusic()
-    //   }
-    // }
   }
 }
 </script>
