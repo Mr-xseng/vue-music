@@ -17,16 +17,38 @@
         <h1 class="title" v-html="currentSong.name"></h1>
         <h2 class="subtitle" v-html="currentSong.singer"></h2>
       </div>
-      <div class="middle">
-        <div class="middle-l">
+      <div class="middle"
+        @touchstart.prevent="middleTouchStart"
+        @touchmove.prevent="middleTouchMove"
+        @touchend="middleTouchEnd"
+      >
+        <div class="middle-l" ref="middleL">
           <div class="cd-wrapper" ref="cdWrapper">
             <div class="cd" :class="cdCls">
               <img class="image" :src="currentSong.image">
             </div>
           </div>
         </div>
+        <scroll class="middle-r" :data="currentLyric && currentLyric.lines"
+                ref="lyricList"
+        >
+          <div class="lyric-wrapper">
+            <div v-if="currentLyric">
+              <p class="text" v-for="(line, index) in currentLyric.lines"
+                  :key="index" ref="currentLyricLine"
+                  :class="{'current': lyricNumber===index}"
+              >
+                {{line.txt}}
+              </p>
+            </div>
+          </div>
+        </scroll>
       </div>
       <div class="bottom">
+        <div class="dot-wrapper">
+          <span class="dot" :class="{'active': currentShow==='cd'}"></span>
+          <span class="dot" :class="{'active': currentShow==='lyric'}"></span>
+        </div>
         <div class="progress-wrapper">
           <span class="time time-l">{{format(currentTime)}}</span>
           <div class="progress-bar-wrapper">
@@ -83,21 +105,28 @@ import {mapGetters, mapMutations} from 'vuex'
 import animations from 'create-keyframe-animation'
 import ProgressBar from 'base/progress-bar/progress-bar'
 import ProgressCircle from 'base/progress-circle/progress-circle'
+import Lyric from 'lyric-parser'
+import scroll from 'base/scroll/scroll'
 import {prefixSty} from 'common/js/dom'
 import {playingMode} from 'common/js/config'
 import {shuffMusicList} from 'common/js/shuff-music'
 const transform = prefixSty('transform')
+const transitionDuration = prefixSty('transitionDuration')
 export default{
   name: 'Player',
   components: {
     ProgressBar,
-    ProgressCircle
+    ProgressCircle,
+    scroll
   },
   data () {
     return {
       songReady: false,
       currentTime: 0,
-      radius: 32
+      radius: 32,
+      currentLyric: null,
+      lyricNumber: 0,
+      currentShow: 'cd'
     }
   },
   computed: {
@@ -131,6 +160,9 @@ export default{
         return 'icon-random'
       }
     }
+  },
+  created () {
+    this.touch = {}
   },
   methods: {
     back () {
@@ -227,12 +259,18 @@ export default{
     loop () {
       this.$refs.audio.currentTime = 0
       this.$refs.audio.play()
+      if (this.currentLyric) {
+        this.currentLyric.seek(0)
+      }
     },
     togglePlaying () {
       if (!this.songReady) {
         return
       }
       this.setPlayingState(!this.playing)
+      if (this.currentLyric) {
+        this.currentLyric.togglePlay()
+      }
     },
     prevMusic () {
       if (!this.songReady) {
@@ -271,6 +309,82 @@ export default{
       if (!this.playing) {
         this.togglePlaying()
       }
+      if (this.currentLyric) {
+        const currentTime = newCurrentTime * 1000
+        this.currentLyric.seek(currentTime)
+      }
+    },
+    middleTouchStart (e) {
+      this.touch.initazed = true
+      const touch = e.touches[0]
+      this.touch.startX = touch.pageX
+      this.touch.startY = touch.pageY
+    },
+    middleTouchMove (e) {
+      if (!this.touch.initazed) {
+        return
+      }
+      const touch = e.touches[0]
+      const deltaX = touch.pageX - this.touch.startX
+      const deltaY = touch.pageY - this.touch.startY
+      if (Math.abs(deltaX) < Math.abs(deltaY)) {
+        return
+      }
+      const left = this.currentShow === 'cd' ? 0 : -window.innerWidth
+      // console.log(left)
+      const offsetWidth = Math.min(0, Math.max(-window.innerWidth, left + deltaX))
+      this.touch.percent = Math.abs(offsetWidth / window.innerWidth)
+      console.log(offsetWidth)
+      this.$refs.lyricList.$el.style[transform] = `translate3d(${offsetWidth}px, 0, 0)`
+      this.$refs.lyricList.$el.style[transitionDuration] = 0
+      this.$refs.middleL.style.opacity = 1 - this.touch.percent
+      this.$refs.middleL.style[transitionDuration] = 0
+    },
+    middleTouchEnd () {
+      let offsetWidth
+      let opacity
+      let time = 300
+      if (this.currentShow === 'cd') {
+        if (this.touch.percent > 0.2) {
+          offsetWidth = -window.innerWidth
+          this.currentShow = 'lyric'
+          opacity = 0
+        } else {
+          offsetWidth = 0
+          opacity = 1
+        }
+      } else {
+        if (this.touch.percent < 0.8) {
+          offsetWidth = 0
+          this.currentShow = 'cd'
+          opacity = 1
+        } else {
+          offsetWidth = -window.innerWidth
+          opacity = 0
+        }
+      }
+      this.$refs.lyricList.$el.style[transform] = `translate3d(${offsetWidth}px, 0, 0)`
+      this.$refs.lyricList.$el.style[transitionDuration] = `${time}ms`
+      this.$refs.middleL.style.opacity = opacity
+      this.$refs.middleL.style[transitionDuration] = `${time}ms`
+      this.touch.initazed = false
+    },
+    getLyric () {
+      this.currentSong.getLyric().then((lyric) => {
+        this.currentLyric = new Lyric(lyric, this.lyricLineNumber)
+        if (this.playing) {
+          this.currentLyric.play()
+        }
+      })
+    },
+    lyricLineNumber (lineNumber, txt) {
+      this.lyricNumber = lineNumber.lineNum
+      if (lineNumber.lineNum > 5) {
+        const lineEle = this.$refs.currentLyricLine[lineNumber.lineNum - 5]
+        this.$refs.lyricList.scrollToElement(lineEle, 1000)
+      } else {
+        this.$refs.lyricList.scrollTo(0, 0, 1000)
+      }
     }
   },
   watch: {
@@ -281,6 +395,10 @@ export default{
       this.$nextTick(() => {
         this.$refs.audio.play()
       })
+      this.getLyric()
+      if (this.currentLyric) {
+        this.currentLyric.stop()
+      }
     },
     playing (newPlay) {
       const audio = this.$refs.audio

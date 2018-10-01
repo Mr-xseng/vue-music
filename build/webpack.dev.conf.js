@@ -10,6 +10,12 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
 const portfinder = require('portfinder')
 
+const express = require('express')
+const axios = require('axios')
+const app = express()
+var apiRoutes = express.Router()
+app.use('/api', apiRoutes)
+
 const HOST = process.env.HOST
 const PORT = process.env.PORT && Number(process.env.PORT)
 
@@ -27,6 +33,32 @@ const devWebpackConfig = merge(baseWebpackConfig, {
       rewrites: [
         { from: /.*/, to: path.posix.join(config.dev.assetsPublicPath, 'index.html') },
       ],
+    },
+    before(app) {
+      app.get('/api/getLyric', function (req, res) {
+        var url = 'https://c.y.qq.com/lyric/fcgi-bin/fcg_query_lyric_new.fcg'
+        axios.get(url, {
+          headers: {
+            referer: 'https://c.y.qq.com/',
+            host: 'c.y.qq.com'
+          },
+          params: req.query
+        })
+          .then((response) => {
+            var result = response.data
+            if (typeof result === 'string') {
+              var reg = /^\w+\(({[^()]+})\)$/
+              var matches = result.match(reg)
+              if (matches) {
+                result = JSON.parse(matches[1])
+              }
+            }
+            res.json(result)
+          })
+          .catch((error) => {
+            console.log(error)
+          })
+      })
     },
     hot: true,
     contentBase: false, // since we use CopyWebpackPlugin.
