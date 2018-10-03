@@ -33,11 +33,13 @@ import SongList from 'base/song-list/song-list'
 import {prefixSty} from 'common/js/dom'
 import Loading from 'base/loading/loading'
 import {mapActions} from 'vuex'
+import {playListMixin} from 'common/js/mixin'
 const REVER_ENV_HEIGHT = 40
 const transform = prefixSty('transform')
 const backdrop = prefixSty('backdrop-filter')
 export default{
   name: 'MusicList',
+  mixins: [playListMixin],
   props: {
     songs: {
       type: Array,
@@ -95,6 +97,11 @@ export default{
       this.randomMusic({
         list: this.songs
       })
+    },
+    handlePlaylistMixin (playList) {
+      const bottom = playList.length > 0 ? '60px' : ''
+      this.$refs.list.$el.style.bottom = bottom
+      this.$refs.list.refresh()
     },
     ...mapActions([
       'selectPlay',

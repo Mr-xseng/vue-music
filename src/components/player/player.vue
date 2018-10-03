@@ -28,6 +28,11 @@
               <img class="image" :src="currentSong.image">
             </div>
           </div>
+          <div class="playing-lyric-wrapper">
+            <div class="playing-lyric">
+              {{playingLyric}}
+            </div>
+          </div>
         </div>
         <scroll class="middle-r" :data="currentLyric && currentLyric.lines"
                 ref="lyricList"
@@ -126,7 +131,8 @@ export default{
       radius: 32,
       currentLyric: null,
       lyricNumber: 0,
-      currentShow: 'cd'
+      currentShow: 'cd',
+      playingLyric: ''
     }
   },
   computed: {
@@ -276,17 +282,25 @@ export default{
       if (!this.songReady) {
         return
       }
-      this.setCurrentIndex(this.currentIndex === 0 ? this.playList.length - 1 : this.currentIndex + 1)
-      this.setPlayingState(true)
-      this.songReady = false
+      if (this.playList.length === 1) {
+        this.loop()
+      } else {
+        this.setCurrentIndex(this.currentIndex === 0 ? this.playList.length - 1 : this.currentIndex + 1)
+        this.setPlayingState(true)
+        this.songReady = false
+      }
     },
     nextMusic () {
       if (!this.songReady) {
         return
       }
-      this.setCurrentIndex(this.currentIndex === this.playList.length - 1 ? 0 : this.currentIndex + 1)
-      this.setPlayingState(true)
-      this.songReady = false
+      if (this.playList.length === 1) {
+        this.loop()
+      } else {
+        this.setCurrentIndex(this.currentIndex === this.playList.length - 1 ? 0 : this.currentIndex + 1)
+        this.setPlayingState(true)
+        this.songReady = false
+      }
     },
     ready () {
       this.songReady = true
@@ -334,7 +348,7 @@ export default{
       // console.log(left)
       const offsetWidth = Math.min(0, Math.max(-window.innerWidth, left + deltaX))
       this.touch.percent = Math.abs(offsetWidth / window.innerWidth)
-      console.log(offsetWidth)
+      // console.log(offsetWidth)
       this.$refs.lyricList.$el.style[transform] = `translate3d(${offsetWidth}px, 0, 0)`
       this.$refs.lyricList.$el.style[transitionDuration] = 0
       this.$refs.middleL.style.opacity = 1 - this.touch.percent
@@ -375,16 +389,22 @@ export default{
         if (this.playing) {
           this.currentLyric.play()
         }
+        console.log(this.currentLyric)
+      }).catch(() => {
+        this.currentLyric = null
+        this.lyricNumber = 0
+        this.playingLyric = ''
       })
     },
-    lyricLineNumber (lineNumber, txt) {
-      this.lyricNumber = lineNumber.lineNum
-      if (lineNumber.lineNum > 5) {
-        const lineEle = this.$refs.currentLyricLine[lineNumber.lineNum - 5]
+    lyricLineNumber ({lineNum, txt}) {
+      this.lyricNumber = lineNum
+      if (lineNum > 5) {
+        const lineEle = this.$refs.currentLyricLine[lineNum - 5]
         this.$refs.lyricList.scrollToElement(lineEle, 1000)
       } else {
         this.$refs.lyricList.scrollTo(0, 0, 1000)
       }
+      this.playingLyric = txt
     }
   },
   watch: {
@@ -392,10 +412,10 @@ export default{
       if (newSong.id === oldSong.id) {
         return
       }
-      this.$nextTick(() => {
+      setTimeout(() => {
         this.$refs.audio.play()
-      })
-      this.getLyric()
+        this.getLyric()
+      }, 500)
       if (this.currentLyric) {
         this.currentLyric.stop()
       }
@@ -505,7 +525,7 @@ export default{
               height: 20px
               line-height: 20px
               font-size: $font-size-medium
-              color: $color-text-l
+              color: #03ef7d
         .middle-r
           display: inline-block
           vertical-align: top

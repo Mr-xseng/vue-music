@@ -84,6 +84,9 @@ export default {
     this.listHeight = []
   },
   methods: {
+    refresh () {
+      this.$refs.listview.refresh()
+    },
     selectItem (item) {
       this.$emit('handleSelectItem', item)
     },
