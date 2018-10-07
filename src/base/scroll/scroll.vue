@@ -1,11 +1,12 @@
 <template>
-  <div ref="wrapper">
+  <div ref="wrapper" class="wrapper">
     <slot></slot>
   </div>
 </template>
 
-<script>
+<script type="text/ecmascript-6">
 import BScroll from 'better-scroll'
+
 export default {
   name: 'scroll',
   props: {
@@ -17,26 +18,34 @@ export default {
       type: Boolean,
       default: true
     },
+    listenScroll: {
+      type: Boolean,
+      default: false
+    },
     data: {
       type: Array,
       default: null
     },
+    pullup: {
+      type: Boolean,
+      default: false
+    },
+    beforeScroll: {
+      type: Boolean,
+      default: false
+    },
     refreshDelay: {
       type: Number,
       default: 20
-    },
-    listenScroll: {
-      type: Boolean,
-      default: false
     }
   },
   mounted () {
     setTimeout(() => {
-      this.initScroll()
+      this._initScroll()
     }, 20)
   },
   methods: {
-    initScroll () {
+    _initScroll () {
       if (!this.$refs.wrapper) {
         return
       }
@@ -45,18 +54,33 @@ export default {
         click: this.click
       })
       // console.log(this.scroll)
+
       if (this.listenScroll) {
-        let _this = this
+        let me = this
         this.scroll.on('scroll', (pos) => {
-          _this.$emit('scroll', pos)
+          me.$emit('scroll', pos)
+        })
+      }
+
+      if (this.pullup) {
+        this.scroll.on('scrollEnd', () => {
+          if (this.scroll.y <= (this.scroll.maxScrollY + 50)) {
+            this.$emit('scrollToEnd')
+          }
+        })
+      }
+
+      if (this.beforeScroll) {
+        this.scroll.on('beforeScrollStart', () => {
+          this.$emit('beforeScroll')
         })
       }
     },
-    enable () {
-      this.scroll && this.scroll.enable()
-    },
     disable () {
       this.scroll && this.scroll.disable()
+    },
+    enable () {
+      this.scroll && this.scroll.enable()
     },
     refresh () {
       this.scroll && this.scroll.refresh()
@@ -72,12 +96,11 @@ export default {
     data () {
       setTimeout(() => {
         this.refresh()
-        // console.log(this.data)
       }, this.refreshDelay)
     }
   }
 }
 </script>
 
-<style scoped>
+<style scoped lang="stylus" rel="stylesheet/stylus">
 </style>

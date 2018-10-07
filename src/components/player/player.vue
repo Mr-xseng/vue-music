@@ -100,6 +100,7 @@
       </div>
     </div>
     </transition>
+    <play-list></play-list>
     <audio :src="currentSong.url" ref="audio" @canplay="ready"
     @error="error" @timeupdate="updateTime" @ended="endMusic"
     ></audio>
@@ -112,6 +113,7 @@ import ProgressBar from 'base/progress-bar/progress-bar'
 import ProgressCircle from 'base/progress-circle/progress-circle'
 import Lyric from 'lyric-parser'
 import scroll from 'base/scroll/scroll'
+import PlayList from 'components/playlist/playlist'
 import {prefixSty} from 'common/js/dom'
 import {playingMode} from 'common/js/config'
 import {shuffMusicList} from 'common/js/shuff-music'
@@ -122,7 +124,8 @@ export default{
   components: {
     ProgressBar,
     ProgressCircle,
-    scroll
+    scroll,
+    PlayList
   },
   data () {
     return {
@@ -389,7 +392,7 @@ export default{
         if (this.playing) {
           this.currentLyric.play()
         }
-        console.log(this.currentLyric)
+        // console.log(this.currentLyric)
       }).catch(() => {
         this.currentLyric = null
         this.lyricNumber = 0

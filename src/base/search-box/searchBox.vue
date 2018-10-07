@@ -1,11 +1,12 @@
 <template>
   <div class="search-box">
     <i class="icon-search"></i>
-    <input class="box" v-model="query" :placeholder="placeholder">
+    <input class="box" v-model="query" :placeholder="placeholder" ref="query">
     <i class="icon-dismiss" v-show="query" @click="remove"></i>
   </div>
 </template>
 <script>
+import {debounce} from 'common/js/shuff-music'
 export default {
   name: 'SearchBox',
   props: {
@@ -25,12 +26,15 @@ export default {
     },
     acceptQuery (key) {
       this.query = key
+    },
+    blur () {
+      this.$refs.query.blur()
     }
   },
   created () {
-    this.$watch('query', (newQ) => {
+    this.$watch('query', debounce((newQ) => {
       this.$emit('query', newQ)
-    })
+    }, 200))
   }
 }
 </script>
