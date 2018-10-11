@@ -95,12 +95,12 @@
           <i :class="miniIcon" @click.stop="togglePlaying" class="icon-mini"></i>
         </progress-circle>
       </div>
-      <div class="control">
+      <div class="control" @click="playlist">
         <i class="icon-playlist"></i>
       </div>
     </div>
     </transition>
-    <play-list></play-list>
+    <play-list ref="playlist"></play-list>
     <audio :src="currentSong.url" ref="audio" @canplay="ready"
     @error="error" @timeupdate="updateTime" @ended="endMusic"
     ></audio>
@@ -179,6 +179,9 @@ export default{
     },
     backBig () {
       this.setPullScreen(true)
+    },
+    playlist () {
+      this.$refs.playlist.show()
     },
     ...mapMutations({
       setPullScreen: 'SET_PULL_SCREEN',
