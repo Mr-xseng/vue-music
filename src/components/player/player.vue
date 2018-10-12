@@ -116,10 +116,11 @@ import scroll from 'base/scroll/scroll'
 import PlayList from 'components/playlist/playlist'
 import {prefixSty} from 'common/js/dom'
 import {playingMode} from 'common/js/config'
-import {shuffMusicList} from 'common/js/shuff-music'
+import {playMixin} from 'common/js/mixin'
 const transform = prefixSty('transform')
 const transitionDuration = prefixSty('transitionDuration')
 export default{
+  mixins: [playMixin],
   name: 'Player',
   components: {
     ProgressBar,
@@ -140,13 +141,9 @@ export default{
   },
   computed: {
     ...mapGetters([
-      'playList',
       'pullScreen',
-      'currentSong',
       'playing',
-      'currentIndex',
-      'mode',
-      'sequenceList'
+      'currentIndex'
     ]),
     playIcon () {
       return this.playing ? 'icon-pause' : 'icon-play'
@@ -159,15 +156,6 @@ export default{
     },
     percent () {
       return this.currentTime / this.currentSong.duration
-    },
-    iconMode () {
-      if (this.mode === playingMode.sequence) {
-        return 'icon-sequence'
-      } else if (this.mode === playingMode.loop) {
-        return 'icon-loop'
-      } else {
-        return 'icon-random'
-      }
     }
   },
   created () {
@@ -184,11 +172,7 @@ export default{
       this.$refs.playlist.show()
     },
     ...mapMutations({
-      setPullScreen: 'SET_PULL_SCREEN',
-      setPlayingState: 'SET_PLAYING_STATE',
-      setCurrentIndex: 'SET_CURRENT_INDEX',
-      setPlayModeIndex: 'SET_PLAY_MODE',
-      setPlayingList: 'SET_PLAY_LIST'
+      setPullScreen: 'SET_PULL_SCREEN'
     }),
     enter (el, done) {
       const {x, y, scale} = this._getDeviation()
@@ -242,24 +226,6 @@ export default{
         y,
         scale
       }
-    },
-    changeMode () {
-      const modeIndex = (this.mode + 1) % 3
-      let list = null
-      this.setPlayModeIndex(modeIndex)
-      if (this.mode === playingMode.random) {
-        list = shuffMusicList(this.sequenceList)
-      } else {
-        list = this.sequenceList
-      }
-      this.findIndex(list)
-      this.setPlayingList(list)
-    },
-    findIndex (list) {
-      const index = list.findIndex((item) => {
-        return item.id === this.currentSong.id
-      })
-      this.setCurrentIndex(index)
     },
     endMusic () {
       if (this.mode === playingMode.loop) {
@@ -415,6 +381,9 @@ export default{
   },
   watch: {
     currentSong (newSong, oldSong) {
+      if (!newSong) {
+        return
+      }
       if (newSong.id === oldSong.id) {
         return
       }

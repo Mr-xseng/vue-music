@@ -4,16 +4,16 @@
       <div class="list-wrapper" @click.stop>
         <div class="list-header">
           <h1 class="title">
-            <i class="icon" :class="getIconMode"></i>
+            <i class="icon" :class="iconMode" @click="changeMode"></i>
             <span class="text">{{getModeText}}</span>
-            <span class="clear">
+            <span class="clear" @click="handleClearClick">
               <i class="icon-clear"></i>
             </span>
           </h1>
         </div>
         <scroll class="list-content" :data="sequenceList" ref="listContent">
           <transition-group name="list" tag="ul" ref="list">
-            <li class="item" :key="index"
+            <li class="item" :key="item.id"
                 v-for="(item, index) in sequenceList"
                 @click="selectItem(item, index)"
             >
@@ -38,14 +38,21 @@
           <span>关闭</span>
         </div>
       </div>
+      <confirm ref="confirm" @confirm="listClear"
+               contentText="是否清空播放列表"
+      >
+      </confirm>
     </div>
   </transition>
 </template>
 <script>
-import {mapGetters, mapMutations, mapActions} from 'vuex'
+import {mapActions} from 'vuex'
 import scroll from 'base/scroll/scroll'
+import Confirm from 'base/confirm/confirm'
 import {playingMode} from 'common/js/config'
+import {playMixin} from 'common/js/mixin'
 export default {
+  mixins: [playMixin],
   name: 'PlayList',
   data () {
     return {
@@ -54,27 +61,13 @@ export default {
     }
   },
   computed: {
-    ...mapGetters([
-      'sequenceList',
-      'mode',
-      'playList',
-      'currentSong'
-    ]),
     getModeText () {
       return this.mode === playingMode.sequence ? '顺序播放' : this.mode === playingMode.random ? '随机播放' : '单曲循环'
-    },
-    getIconMode () {
-      if (this.mode === playingMode.sequence) {
-        return 'icon-sequence'
-      } else if (this.mode === playingMode.loop) {
-        return 'icon-loop'
-      } else {
-        return 'icon-random'
-      }
     }
   },
   components: {
-    scroll
+    scroll,
+    Confirm
   },
   methods: {
     show () {
@@ -109,10 +102,17 @@ export default {
         newIndex = index
       }
       this.setCurrentIndex(newIndex)
-      this.setState(true)
+      this.setPlayingState(true)
     },
     deleteOne (song) {
       this.deleteSong(song)
+    },
+    handleClearClick () {
+      this.$refs.confirm.show()
+    },
+    listClear () {
+      this.clearMusicList()
+      this.hide()
     },
     toggleFavoriteSong (song) {
       if (this.getFavoriteSong(song)) {
@@ -143,16 +143,16 @@ export default {
       this.$refs.listContent.scrollToElement(this.$refs.list.$el.children[index], 300)
       // console.log(index)
     },
-    ...mapMutations({
-      setCurrentIndex: 'SET_CURRENT_INDEX',
-      setState: 'SET_PLAYING_STATE'
-    }),
     ...mapActions([
-      'deleteSong'
+      'deleteSong',
+      'clearMusicList'
     ])
   },
   watch: {
     currentSong (newSong, oldSong) {
+      if (!newSong) {
+        return
+      }
       if (!this.showFlag || oldSong.id === newSong.id) {
         return
       }
@@ -218,7 +218,7 @@ export default {
           height 40px
           overflow hidden
           &.list-enter-active, &.list-leave-active
-            transition all 0.1s
+            transition  all 0.1s
           &.list-enter, &.list-leave-to
             height:0
           .current
