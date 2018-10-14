@@ -11,7 +11,10 @@
             </span>
           </h1>
         </div>
-        <scroll class="list-content" :data="sequenceList" ref="listContent">
+        <scroll class="list-content"
+                :data="sequenceList"
+                ref="listContent"
+                :refreshDelay="refreshDelay">
           <transition-group name="list" tag="ul" ref="list">
             <li class="item" :key="item.id"
                 v-for="(item, index) in sequenceList"
@@ -29,9 +32,9 @@
           </transition-group>
         </scroll>
         <div class="list-operate">
-          <div class="add">
+          <div class="add" @click="addSong">
             <i class="icon-add"></i>
-            <span class="text">添加到播放列表</span>
+            <span class="text">添加歌曲到队列</span>
           </div>
         </div>
         <div class="list-close" @click=hide>
@@ -42,6 +45,7 @@
                contentText="是否清空播放列表"
       >
       </confirm>
+      <add-song ref="addSong"></add-song>
     </div>
   </transition>
 </template>
@@ -49,15 +53,16 @@
 import {mapActions} from 'vuex'
 import scroll from 'base/scroll/scroll'
 import Confirm from 'base/confirm/confirm'
+import AddSong from 'components/add-song/add-song'
 import {playingMode} from 'common/js/config'
-import {playMixin} from 'common/js/mixin'
+import {playMixin, favoriteMixin} from 'common/js/mixin'
 export default {
-  mixins: [playMixin],
+  mixins: [playMixin, favoriteMixin],
   name: 'PlayList',
   data () {
     return {
       showFlag: false,
-      favoriteList: []
+      refreshDelay: 120
     }
   },
   computed: {
@@ -67,7 +72,8 @@ export default {
   },
   components: {
     scroll,
-    Confirm
+    Confirm,
+    AddSong
   },
   methods: {
     show () {
@@ -85,13 +91,6 @@ export default {
         return 'icon-play-mini'
       }
     },
-    favoriteIcon (item) {
-      if (this.getFavoriteSong(item)) {
-        return 'icon-favorite'
-      } else {
-        return 'icon-not-favorite'
-      }
-    },
     selectItem (item, index) {
       let newIndex
       if (this.mode === playingMode.random) {
@@ -107,34 +106,15 @@ export default {
     deleteOne (song) {
       this.deleteSong(song)
     },
+    addSong () {
+      this.$refs.addSong.show()
+    },
     handleClearClick () {
       this.$refs.confirm.show()
     },
     listClear () {
       this.clearMusicList()
       this.hide()
-    },
-    toggleFavoriteSong (song) {
-      if (this.getFavoriteSong(song)) {
-        this.deleteFavoriteSong(song)
-      } else {
-        this.saveFavoriteSong(song)
-      }
-    },
-    saveFavoriteSong (song) {
-      this.favoriteList.push(song)
-    },
-    deleteFavoriteSong (item) {
-      const index = this.favoriteList.findIndex((song) => {
-        return item.id === song.id
-      })
-      this.favoriteList.splice(index, 1)
-    },
-    getFavoriteSong (item) {
-      const index = this.favoriteList.findIndex((song) => {
-        return item.id === song.id
-      })
-      return index > -1
     },
     getCurrentScroll (current) {
       const index = this.sequenceList.findIndex((song) => {

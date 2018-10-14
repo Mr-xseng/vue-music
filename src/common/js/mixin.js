@@ -1,4 +1,4 @@
-import {mapGetters, mapMutations} from 'vuex'
+import {mapGetters, mapMutations, mapActions} from 'vuex'
 import {playingMode} from './config'
 import {shuffMusicList} from './shuff-music'
 
@@ -69,5 +69,71 @@ export const playMixin = {
       setCurrentIndex: 'SET_CURRENT_INDEX',
       setPlayingState: 'SET_PLAYING_STATE'
     })
+  }
+}
+
+export const searchMixin = {
+  data () {
+    return {
+      query: '',
+      refreshDelay: 120
+    }
+  },
+  computed: {
+    ...mapGetters([
+      'searchHistory'
+    ])
+  },
+  methods: {
+    addQuery (key) {
+      this.$refs.searchBox.acceptQuery(key)
+    },
+    handleQuery (value) {
+      this.query = value
+    },
+    listenScroll () {
+      this.$refs.searchBox.blur()
+    },
+    saveSearch () {
+      this.saveSearchHistory(this.query)
+      // console.log(this.searchHistory)
+    },
+    ...mapActions([
+      'saveSearchHistory',
+      'deleteSearchHistory'
+    ])
+  }
+}
+
+export const favoriteMixin = {
+  computed: {
+    ...mapGetters([
+      'favoriteList'
+    ])
+  },
+  methods: {
+    findFavoriteSong (song) {
+      const index = this.favoriteList.findIndex((item) => {
+        return item.id === song.id
+      })
+      return index > -1
+    },
+    toggleFavoriteSong (item) {
+      if (this.findFavoriteSong(item)) {
+        this.deleteFavorite(item)
+      } else {
+        this.saveFavorite(item)
+      }
+    },
+    favoriteIcon (item) {
+      if (this.findFavoriteSong(item)) {
+        return 'icon-favorite'
+      }
+      return 'icon-not-favorite'
+    },
+    ...mapActions([
+      'saveFavorite',
+      'deleteFavorite'
+    ])
   }
 }

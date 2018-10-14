@@ -74,8 +74,8 @@
           <div class="icon icon-right">
             <i class="icon-next" @click="nextMusic"></i>
           </div>
-          <div class="icon icon-right">
-            <i class="icon icon-not-favorite"></i>
+          <div class="icon icon-right" @click="toggleFavoriteSong(currentSong)">
+            <i class="icon" :class="favoriteIcon(currentSong)"></i>
           </div>
         </div>
       </div>
@@ -107,7 +107,7 @@
   </div>
 </template>
 <script>
-import {mapGetters, mapMutations} from 'vuex'
+import {mapGetters, mapMutations, mapActions} from 'vuex'
 import animations from 'create-keyframe-animation'
 import ProgressBar from 'base/progress-bar/progress-bar'
 import ProgressCircle from 'base/progress-circle/progress-circle'
@@ -116,11 +116,11 @@ import scroll from 'base/scroll/scroll'
 import PlayList from 'components/playlist/playlist'
 import {prefixSty} from 'common/js/dom'
 import {playingMode} from 'common/js/config'
-import {playMixin} from 'common/js/mixin'
+import {playMixin, favoriteMixin} from 'common/js/mixin'
 const transform = prefixSty('transform')
 const transitionDuration = prefixSty('transitionDuration')
 export default{
-  mixins: [playMixin],
+  mixins: [playMixin, favoriteMixin],
   name: 'Player',
   components: {
     ProgressBar,
@@ -174,6 +174,9 @@ export default{
     ...mapMutations({
       setPullScreen: 'SET_PULL_SCREEN'
     }),
+    ...mapActions([
+      'savePlayHistory'
+    ]),
     enter (el, done) {
       const {x, y, scale} = this._getDeviation()
       // console.log(x, y, scale)
@@ -276,6 +279,7 @@ export default{
     },
     ready () {
       this.songReady = true
+      this.savePlayHistory(this.currentSong)
     },
     error () {
       this.songReady = true
@@ -381,10 +385,7 @@ export default{
   },
   watch: {
     currentSong (newSong, oldSong) {
-      if (!newSong) {
-        return
-      }
-      if (newSong.id === oldSong.id) {
+      if (!newSong.id || newSong.id === oldSong.id || !newSong.url) {
         return
       }
       setTimeout(() => {

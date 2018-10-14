@@ -1,8 +1,13 @@
 import storage from 'good-storage'
 
 const SEARCH_KEY = '__SEARCH__'
-
 const SEARCH_MAX_LEN = 15
+
+const PLAY_KEY = '__PLAY__'
+const PLAY_MAX_LEN = 200
+
+const FAVORITE_KEY = '__FAVORITE__'
+const FAVORITE_MAX_LEN = 200
 
 function insertArray (arr, key, comp, len) {
   let index = arr.findIndex(comp)
@@ -50,4 +55,38 @@ export function clearSearch () {
 
 export function loadSearch () {
   return storage.get(SEARCH_KEY, [])
+}
+
+export function savePlay (song) {
+  let playHistory = storage.get(PLAY_KEY, [])
+  insertArray(playHistory, song, (item) => {
+    return item.id === song.id
+  }, PLAY_MAX_LEN)
+  storage.set(PLAY_KEY, playHistory)
+  return playHistory
+}
+
+export function loadPlay () {
+  return storage.get(PLAY_KEY, [])
+}
+
+export function saveFavoriteSong (song) {
+  let favoriteList = storage.get(FAVORITE_KEY, [])
+  insertArray(favoriteList, song, (item) => {
+    return item.id === song.id
+  }, FAVORITE_MAX_LEN)
+  storage.set(FAVORITE_KEY, favoriteList)
+  return favoriteList
+}
+export function deleteFavoriteSong (song) {
+  let favoriteList = storage.get(FAVORITE_KEY, [])
+  deleteArrayItem(favoriteList, (item) => {
+    return song.id === item.id
+  })
+  storage.set(FAVORITE_KEY, favoriteList)
+  return favoriteList
+}
+
+export function loadFavorite () {
+  return storage.get(FAVORITE_KEY, [])
 }

@@ -79,7 +79,7 @@ export default{
       } else {
         this.insertSong(item)
       }
-      this.$emit('saveSearch')
+      this.$emit('select')
     },
     refresh () {
       this.$refs.suggest.refresh()

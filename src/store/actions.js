@@ -1,7 +1,8 @@
 import * as types from './mutation-types'
 import {playingMode} from 'common/js/config'
 import {shuffMusicList} from 'common/js/shuff-music'
-import {saveSearch, deleteSearch, clearSearch} from 'common/js/cache'
+import {saveSearch, deleteSearch, clearSearch, savePlay,
+  saveFavoriteSong, deleteFavoriteSong} from 'common/js/cache'
 
 function findIndex (list, song) {
   return list.findIndex((item) => {
@@ -107,4 +108,16 @@ export const clearMusicList = function ({commit}) {
   commit(types.SET_PLAYLIST, [])
   commit(types.SET_CURRENT_INDEX, -1)
   commit(types.SET_PLAYING_STATE, false)
+}
+
+export const savePlayHistory = function ({commit}, song) {
+  commit(types.SET_PLAY_HISTORY, savePlay(song))
+}
+
+export const saveFavorite = function ({commit}, song) {
+  commit(types.SET_FAVORITE_LIST, saveFavoriteSong(song))
+}
+
+export const deleteFavorite = function ({commit}, song) {
+  commit(types.SET_FAVORITE_LIST, deleteFavoriteSong(song))
 }
