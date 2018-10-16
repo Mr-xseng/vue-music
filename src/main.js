@@ -7,6 +7,15 @@ import router from './router'
 import store from './store/index'
 import 'common/stylus/index.styl'
 
+/* eslint-disable no-unused-vars */
+import Vconsole from 'vconsole'
+
+let vconsole = new Vconsole()
+
+export default vconsole
+
+console.log('hello world')
+
 Vue.use(VueLazyload, {
   loading: require('common/image/default.png')
 })
