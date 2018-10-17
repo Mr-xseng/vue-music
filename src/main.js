@@ -8,13 +8,19 @@ import store from './store/index'
 import 'common/stylus/index.styl'
 
 /* eslint-disable no-unused-vars */
-import Vconsole from 'vconsole'
+// import Vconsole from 'vconsole'
+//
+// let vconsole = new Vconsole()
+//
+// export default vconsole
 
-let vconsole = new Vconsole()
+// console.log('hello world')
 
-export default vconsole
-
-console.log('hello world')
+// function noop () {
+// }
+//
+// window.MessageChannel = noop
+// window.setImmediate = noop
 
 Vue.use(VueLazyload, {
   loading: require('common/image/default.png')
